@@ -41,7 +41,7 @@ int main()
 
   pid.Init(0.1,0.1,0.01);
 
-  cout<<pid.Kd<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
+  cout<<pid.Kp<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
 
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -62,6 +62,7 @@ int main()
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value;
 
+          double current_p;
           /*
           * TODO: Calcuate steering value here, remember the steering value is
           * [-1, 1].
@@ -71,27 +72,22 @@ int main()
 
           double dt;
 
-          double prev_cte;
-          double diff_cte;
-          double sum_cte;
           double curr_time;
           double prev_time;
 
           curr_time = clock();
 
-//          diff_cte = cte - prev_cte;
-//          prev_cte = cte;
-//          sum_cte += cte;
-
           double output;
 
           dt = (curr_time - prev_time)/CLOCKS_PER_SEC;
+//          current_p = speed * dt * sin(angle);
 
-          double error = cte - output;
+          pid.UpdateError(cte);
 
-          pid.UpdateError(error);
 
-          output = -pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error / dt;
+          Kp, Ki, Kd = twiddle();
+
+          output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error / dt ;
 
           if (output < -1) {
                 output = -1;
@@ -104,7 +100,6 @@ int main()
           steer_value = output;
 
           prev_time = curr_time;
-
 
 //           DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;

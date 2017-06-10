@@ -37,6 +37,7 @@ public:
   */
   void UpdateError(double cte);
 
+  void twiddle(int tol);
   /*
   * Calculate the total PID error.
   */
