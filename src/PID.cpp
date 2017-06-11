@@ -1,6 +1,6 @@
 #include "PID.h"
 #include <time.h>
-
+#include <iostream>
 
 using namespace std;
 
@@ -36,44 +36,52 @@ void PID::UpdateError(double cte) {
 
     prev_cte = cte;
 
+//    double total_err =
 }
 
 double PID::TotalError() {
-
 
 //    return Kp, Ki, Kd;
 }
 
 
-void twiddle(int tol = 0.2){
-
-//    p = [0, 0, 0];
-//    dp = [1, 1, 1];
-//    robot = make_robot()
+//void twiddle(int tol = 0.2){
 //
-//    it = 0
-//    while sum(dp) > tol:
-//            print("Iteration {}, best error = {}".format(it, best_err))
-//    for i in range(len(p)):
-//    p[i] += dp[i]
-//    robot = make_robot()
-//    x_trajectory, y_trajectory, err = run(robot, p)
+//    double p[] = {0, 0, 0};
+//    double dp[] = {1, 1, 1};
+////    robot = make_robot()
+////
+//    int it = 0;
+//    int sum = 0;
 //
-//    if err < best_err:
-//            best_err = err
-//    dp[i] *= 1.1
-//    else:
-//    p[i] -= 2 * dp[i]
-//    robot = make_robot()
-//    x_trajectory, y_trajectory, err = run(robot, p)
+//    do {
 //
-//    if err < best_err:
-//            best_err = err
-//    dp[i] *= 1.1
-//    else:
-//    p[i] += dp[i]
-//    dp[i] *= 0.9
-//    it += 1
-
-    return Kp, Ki, Kd;
-}
+//        for (int idx = 0; idx<sizeof(dp);idx++ ){
+//            sum += dp[idx];
+//            p[idx] = dp[idx];
+//            robot = make_robot();
+//            x_trajectory, y_trajectory, err = run(robot, p);
+//
+//            if (err < best_err){
+//                best_err = err;
+//                dp[idx] *= 1.1;
+//            }
+//
+//            else {
+//                p[idx] -= 2 * dp[idx];
+////                robot = make_robot()
+////                x_trajectory, y_trajectory, err = run(robot, p)
+//
+//                if (err < best_err){
+//                best_err = err;
+//                dp[idx] *= 1.1;
+//                }
+//
+//                else{
+//                p[idx] += dp[idx];
+//                dp[idx] *= 0.9;
+//                }
+//            }
+//        }
+//    } while (sum > tol);
+//}

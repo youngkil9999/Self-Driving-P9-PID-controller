@@ -39,7 +39,7 @@ int main()
   PID pid;
   // TODO: Initialize the pid variable.
 
-  pid.Init(0.1,0.1,0.01);
+  pid.Init(0.14,0.01,0.40);
 
   cout<<pid.Kp<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
 
@@ -85,7 +85,7 @@ int main()
           pid.UpdateError(cte);
 
 
-          Kp, Ki, Kd = twiddle();
+//          twiddle();
 
           output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error / dt ;
 
@@ -144,6 +144,7 @@ int main()
   });
 
   int port = 4567;
+
   if (h.listen(port))
   {
     std::cout << "Listening to port " << port << std::endl;
