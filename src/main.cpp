@@ -15,6 +15,7 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -31,6 +32,8 @@ std::string hasData(std::string s) {
   return "";
 }
 
+
+
 int main()
 {
 
@@ -39,7 +42,7 @@ int main()
   PID pid;
   // TODO: Initialize the pid variable.
 
-  pid.Init(0.14,0.01,0.40);
+  pid.Init(0.6,0.8,0.4);
 
   cout<<pid.Kp<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
 
@@ -62,7 +65,6 @@ int main()
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value;
 
-          double current_p;
           /*
           * TODO: Calcuate steering value here, remember the steering value is
           * [-1, 1].
@@ -71,23 +73,45 @@ int main()
           */
 
           double dt;
-
           double curr_time;
           double prev_time;
-
-          curr_time = clock();
-
           double output;
+          double best_err;
 
-          dt = (curr_time - prev_time)/CLOCKS_PER_SEC;
-//          current_p = speed * dt * sin(angle);
+          if (pid.TWIDDLE == 0){
 
-          pid.UpdateError(cte);
+            pid.UpdateError(cte);
+
+            if (pid.num_step > 100){
+                pid.TWIDDLE = 1;
+                pid.best_err = pid.err;
+                pid.err = 0;
+                pid.d_error = 0;
+                pid.i_error = 0;
+                pid.p_error = 0;
+                pid.num_step = 0;
+
+            }
+          } else if(pid.TWIDDLE == 1){
+//STEP for comparing TWIDDLE 0 error with TWIDDLE 1 error
+
+            pid.twiddle(cte);
+
+            pid.UpdateError(cte);
+
+          } else if (pid.TWIDDLE ==2){
+
+              std::string reset_msg = "42[\"reset\",{}]";
+              ws.send(reset_msg.data(), reset_msg.length(), uWS::OpCode::TEXT);
+
+          }
 
 
-//          twiddle();
+          output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error ;
 
-          output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error / dt ;
+//          cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
+
+
 
           if (output < -1) {
                 output = -1;
@@ -101,15 +125,17 @@ int main()
 
           prev_time = curr_time;
 
+
 //           DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+//          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = 0.15;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+//          std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
         }
       } else {
         // Manual driving
@@ -156,3 +182,4 @@ int main()
   }
   h.run();
 }
+
