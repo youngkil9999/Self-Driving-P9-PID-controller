@@ -43,6 +43,7 @@ public:
   double best_err;
   int step;
   int TWIDDLE;
+  int weight;
 
   /*
   * Constructor
