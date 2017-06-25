@@ -42,10 +42,9 @@ int main()
   PID pid;
   // TODO: Initialize the pid variable.
 
-  pid.Init(0.6,0.8,0.4);
+  pid.Init(1, 0.01, 100);
 
   cout<<pid.Kp<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
-
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -82,36 +81,49 @@ int main()
 
             pid.UpdateError(cte);
 
-            if (pid.num_step > 100){
+            if (pid.num_step > 200){
+
+                pid.err = pid.TotalError(pid.err);
+
+                cout<< "best err 0 is " << pid.best_err << endl;
+                cout<< "err 00 is " << pid.err << endl;
+
+                if(pid.best_err == 0){
+                    pid.best_err = pid.err;
+                }
+
+                if(pid.err < pid.best_err){
+                    pid.best_err = pid.err;
+                }
+
                 pid.TWIDDLE = 1;
-                pid.best_err = pid.err;
                 pid.err = 0;
                 pid.d_error = 0;
                 pid.i_error = 0;
                 pid.p_error = 0;
                 pid.num_step = 0;
 
+                cout<< "best err 1 is " << pid.best_err << endl;
+                cout<< "err is " << pid.err << endl;
+                cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
+                cout << "dKp : " << pid.dKp << " dKi : " << pid.dKi << " dKd : " << pid.dKd << endl;
+
+                pid.Restart(ws);
+
             }
           } else if(pid.TWIDDLE == 1){
 //STEP for comparing TWIDDLE 0 error with TWIDDLE 1 error
+//            cout << "RESTART WORKING" << endl;
 
             pid.twiddle(cte);
 
-            pid.UpdateError(cte);
+//            pid.UpdateError(cte);
 
           } else if (pid.TWIDDLE ==2){
 
-              std::string reset_msg = "42[\"reset\",{}]";
-              ws.send(reset_msg.data(), reset_msg.length(), uWS::OpCode::TEXT);
-
           }
 
-
           output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error ;
-
-//          cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
-
-
 
           if (output < -1) {
                 output = -1;
@@ -121,17 +133,40 @@ int main()
                 output = 1;
           }
 
+//          double t_err = pid.TotalError(pid.err);
+//            || pid.err > 2*pid.best_err
+
+//          if (pid.sum == 1){
+//
+//              pid.sum = 0;
+//            cte > 2.5 || cte < -2.5
+              if (pid.sum == 1) {
+
+                  pid.sum = 0;
+
+                  cout << "num_step is : " <<pid.num_step << endl;
+                  cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
+                  cout << "dKp : " << pid.dKp << " dKi : " << pid.dKi << " dKd : " << pid.dKd << endl;
+                  cout << "p_error : " << pid.p_error << " i_error : " << pid.i_error << " d_error : " << pid.d_error << endl;
+                  cout << "best_error is  " << pid.best_err <<endl;
+
+                  pid.TWIDDLE = 1;
+                  pid.err = 0;
+                  pid.d_error = 0;
+                  pid.i_error = 0;
+                  pid.p_error = 0;
+                  pid.num_step = 0;
+                  pid.numOfstep = 0;
+
+                  pid.Restart(ws);
+
+              }
+
           steer_value = output;
-
-          prev_time = curr_time;
-
-
-//           DEBUG
-//          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.15;
+          msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
 //          std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
