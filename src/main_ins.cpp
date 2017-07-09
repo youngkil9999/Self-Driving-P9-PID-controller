@@ -34,7 +34,7 @@ std::string hasData(std::string s) {
 
 
 
-int main()
+int main(int argc, char* argv[])
 {
 
   uWS::Hub h;
@@ -42,13 +42,7 @@ int main()
   PID pid;
   // TODO: Initialize the pid variable.
 
-//  pid.Init(0.2, 0.001, 0.02);
-//  pid.Init(0.1, 0.001, 0.01);
-//  pid.Init(0.221081, 0.000150046, 0.0117859); speed 0.2
-
-    pid.Init(0.252628,0.00077475,2.16025);
-
-  cout << "PRINT DUPLICATE CHECK" <<endl;
+  pid.Init(atof(argv[0]), atof(argv[1]), atof(argv[2]));
 
   cout<<pid.Kp<<' '<<pid.Ki<<' '<<pid.Kd<<endl;
 
@@ -78,56 +72,67 @@ int main()
           * another PID controller to control the speed!
           */
 
-          double dt;
-          double curr_time;
-          double prev_time;
+//          double dt;
+//          double curr_time;
+//          double prev_time;
           double output;
-          double best_err;
+//          double best_err;
 
-          if (pid.TWIDDLE == 0){
+//          if (cte > 0.4 || cte < -0.4){
+//              cout << cte <<endl;
+//          }
 
-            pid.UpdateError(cte);
+//          if (pid.TWIDDLE == 0){
+//
+//            pid.UpdateError(cte);
+//
+////              pid.num_step > 200 + pid.weight ||
+////              (cte > 0.5 || cte < -0.5)&& pid.err > 0
+//            if ( (pid.num_step > 1000 || (cte > 1.5 || cte < -1.5 )) && pid.err >0 ){
+//
+//                pid.err = pid.TotalError(pid.err);
+//
+//                cout<< "Initial best err is : " << pid.best_err << endl;
+//                cout<< "Initial err is : " << pid.err << endl;
+//                cout<< "Initial weight : " <<pid.weight * 2 << endl;
+//
+//                if(pid.best_err == 0){
+//                    pid.best_err = pid.err;
+//                }
+//
+//                if(pid.err < pid.best_err){
+//                    pid.best_err = pid.err;
+//                }
+//
+//                pid.TWIDDLE = 1;
+//                pid.err = 0;
+//                pid.d_error = 0;
+//                pid.i_error = 0;
+//                pid.p_error = 0;
+//                pid.num_step = 0;
+//                pid.numOfstep = 0;
+//
+//                cout<< "Initial best err_rev is : " << pid.best_err << endl;
+//                cout<< "Initial err_rev is : " << pid.err << endl;
+//                cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
+//                cout << "dKp : " << pid.dKp << " dKi : " << pid.dKi << " dKd : " << pid.dKd << endl;
+//
+//                pid.Restart(ws);
+//
+//            }
+//          } else if(pid.TWIDDLE == 1){
+////STEP for comparing TWIDDLE 0 error with TWIDDLE 1 error
+//
+//            pid.twiddle(cte);
+//
+//          } else if (pid.TWIDDLE ==2){
+//
+//          }
 
-//              pid.num_step > 200 + pid.weight ||
-//              (cte > 0.5 || cte < -0.5)&& pid.err > 0
-            if (pid.num_step > 6000 + pid.weight && pid.err > 0 ) {
+          pid.UpdateError(cte);
 
-                pid.err = pid.TotalError(pid.err);
+          output = pid.TotalError();
 
-                cout << "Twiddle 0 " << endl;
-
-                pid.best_err = pid.err;
-                cout<<" Total Error is :" << pid.err << ", num step is : " << pid.num_step <<  endl;
-                cout<< "best err is : " << pid.best_err << "Time period : " << pid.num_step + pid.weight << endl;
-                cout << "Kp : " << pid.Kp << " Ki : " << pid.Ki << " Kd : " << pid.Kd << endl;
-                cout << "dKp : " << pid.dKp << " dKi : " << pid.dKi << " dKd : " << pid.dKd << endl;
-                cout << "p_error : " << pid.p_error << " i_error : " << pid.i_error << " d_error : " << pid.d_error << endl;
-
-                pid.TWIDDLE = 1;
-                pid.err = 0;
-                pid.d_error = 0;
-                pid.i_error = 0;
-                pid.p_error = 0;
-                pid.num_step = 0;
-                pid.numOfstep = 0;
-
-                pid.Restart(ws);
-
-            }
-          } else if(pid.TWIDDLE == 1){
-//STEP for comparing TWIDDLE 0 error with TWIDDLE 1 error
-
-//            cout << "Twiddle 1" <<endl;
-
-            pid.twiddle(cte);
-
-          } else if (pid.TWIDDLE ==2){
-
-//            cout << "Twiddle 2" << endl;
-
-          }
-
-          output = - pid.Kp * pid.p_error - pid.Ki * pid.i_error - pid.Kd * pid.d_error ;
 
 //          cout << output << endl;
 
@@ -147,33 +152,23 @@ int main()
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
 //          std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-
-
-          if (pid.sum == 1) {
-//            cout << " sum is 1 so initialized" <<endl;
+//          if (pid.sum == 1) {
+//
 //            cout << "best_error is  " << pid.best_err <<endl;
-
-            pid.sum = 0;
-            pid.err = 0;
-            pid.d_error = 0;
-            pid.i_error = 0;
-            pid.p_error = 0;
-            pid.num_step = 0;
-            pid.numOfstep = 0;
-            pid.Restart(ws);
-
-          } else if (pid.sum ==2){
-
-              pid.sum = 0;
-              pid.TWIDDLE = 0;
-              pid.err = 0;
-              pid.d_error = 0;
-              pid.i_error = 0;
-              pid.p_error = 0;
-              pid.num_step = 0;
-              pid.numOfstep = 0;
-              pid.Restart(ws);
-          }
+//
+//            pid.sum = 0;
+//            pid.TWIDDLE = 0;
+//            pid.err = 0;
+//            pid.d_error = 0;
+//            pid.i_error = 0;
+//            pid.p_error = 0;
+//            pid.num_step = 0;
+//            pid.numOfstep = 0;
+//
+//            if (cte > 1.5 || cte < -1.5){
+//                pid.Restart(ws);
+//            }
+//          }
         }
       } else {
         // Manual driving
