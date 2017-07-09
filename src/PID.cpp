@@ -3,12 +3,13 @@
 #include <iostream>
 #include <math.h>
 #define MIN_STEP 100
-#define MAX_STEP 200
-#define OFFSET 100
+#define MAX_STEP 6000
+#define OFFSET 500
+#define H_Limit 1.8
+#define L_Limit -1.5
 #include <uWS/uWS.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 
 
 using namespace std;
@@ -27,6 +28,10 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
     Ki = Ki_;
     Kd = Kd_;
 
+//    dKp = 0.000760891;
+//    dKi = 0.00000929978;
+//    dKd = 0.000126293;
+
     dKp = Kp/4;
     dKi = Ki/4;
     dKd = Kd/4;
@@ -35,7 +40,7 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
     i_error = 0;
     d_error = 0;
 
-    tol = 0.0002;
+    tol = 0.002;
 
     int numOfstep = 0;
 
@@ -47,7 +52,6 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
     step = 0;
     weight = 0;
     prev_cte = 0;
-
 
 }
 
@@ -61,9 +65,7 @@ void PID::UpdateError(double cte) {
 
     prev_cte = cte;
 
-//    cout << "p_error : " << p_error << ", i_error : "<< i_error<< ", d_error :" << d_error << ", prev_d_error " << prev_cte << endl;
-
-    if (num_step > MIN_STEP){
+    if (num_step > MIN_STEP) {
         err += pow(cte, 2);
     }
 
@@ -73,8 +75,12 @@ void PID::UpdateError(double cte) {
 
 
 double PID::TotalError(double err) {
-
-    cout<<"Total Error is :" << err/(num_step - MIN_STEP) << ", num step is : " << num_step << ", error is : "<< err << endl;
+//    cout << "Twiddle 1" << endl;
+    cout<<" Total Error is :" << err/(num_step - MIN_STEP) << ", num step is : " << num_step << ", error is : "<< err << endl;
+    cout<< "best err is : " << best_err << "Time period : " << num_step + weight << endl;
+    cout << "Kp : " << Kp << " Ki : " << Ki << " Kd : " << Kd << endl;
+    cout << "dKp : " << dKp << " dKi : " << dKi << " dKd : " << dKd << endl;
+//    cout<< "best err is : " << best_err << "Time period : " << num_step + weight << endl;
 
     return err/(num_step-MIN_STEP);
 
@@ -82,6 +88,8 @@ double PID::TotalError(double err) {
 
 
 void PID::twiddle(double cte) {
+
+//    cout << cte <<endl;
 
     if (step == 0) {
 
@@ -96,8 +104,10 @@ void PID::twiddle(double cte) {
 //            cout << "Step 0, Kd += dKd" <<endl;
         }
 
-        numOfstep = 0;
+//        numOfstep = 0;
         step = 1;
+        sum = 1;
+
 
     }
 
@@ -105,253 +115,160 @@ void PID::twiddle(double cte) {
     else if (step == 1) {
 
         if (K_option == 0) {
+
             UpdateError(cte);
 
-            if (numOfstep > MAX_STEP + weight) {
+//            numOfstep > MAX_STEP + weight ||
+//            (cte > H_Limit || cte < L_Limit )&& err > 0
+//            || (fabs(cte) > H_Limit )
 
+            if ((numOfstep > MAX_STEP + weight) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
-
                     best_err = err;
                     dKp *= 1.1;
                     step = 0;
                     K_option = 1;
-//                    weight += OFFSET;
+                    weight += OFFSET;
+                    sum = 2;
 
-                    cout << "Step 1, Kp += 1.1" <<endl;
-                    cout<< "best err 2 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
                 } else {
 
                     Kp -= 2*dKp;
                     step = 2;
-//                    sum = 1;
-//                    cout << "Step 1, Kp -= 2*dKp" <<endl;
-//                    cout<< "best err 3 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
-                }
+                    sum = 1;
 
-//                cout << "numOfstep is " << numOfstep <<endl;
-                numOfstep = 0;
-                num_step = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
+                }
 
             }
 
         } else if (K_option == 1) {
             UpdateError(cte);
 
-            if (numOfstep > MAX_STEP + weight) {
-
+            if ((numOfstep > MAX_STEP + weight) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
+
                     best_err = err;
                     dKi *= 1.1;
                     step = 0;
                     K_option = 2;
-//                    num_step = 0;
-//                    weight += OFFSET;
+                    weight += OFFSET;
+                    sum = 2;
 
-                    cout << "Step 1, dKi *= 1.1" <<endl;
-                    cout<< "best err 4 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
+
                 } else {
                     Ki -= 2*dKi;
                     step = 2;
-//                    sum = 1;
-//                    cout << "Step 1, Ki -= 2*dKi" <<endl;
-//                    cout<< "best err 5 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
-                }
-//                cout << "numOfstep is " << numOfstep <<endl;
+                    sum = 1;
 
-                numOfstep = 0;
-                num_step = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
+                }
 
             }
 
         } else if (K_option == 2) {
             UpdateError(cte);
 
-            if (numOfstep > MAX_STEP + weight) {
-
+            if ((numOfstep > MAX_STEP + weight ) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
+
                     best_err = err;
                     dKd *= 1.1;
                     step = 0;
                     K_option = 0;
-//                    num_step = 0;
-//                    weight += OFFSET;
+                    weight += OFFSET;
+                    sum = 2;
 
-                    cout << "Step 1, dKd *= 1.1" <<endl;
-                    cout<< "best err 6 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
                 } else {
                     Kd -= 2*dKd;
-//                    sum = 1;
-
-//                    cout << "Step 1, Kd -= 2*dKp" <<endl;
-//                    cout<< "best err 7 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
                     step = 2;
+                    sum = 1;
+
                 }
-//                cout << "numOfstep is " << numOfstep <<endl;
-
-                numOfstep = 0;
-                num_step = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
-
-
             }
         }
     }
 
 // Step 2 add last dKp, dKi, dKd
     else if (step == 2){
+
         if (K_option == 0) {
             UpdateError(cte);
-            if (numOfstep > MAX_STEP + weight) {
 
+            if ((numOfstep > MAX_STEP + weight ) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
+
                     best_err = err;
                     dKp *= 1.1;
-                    num_step = 0;
+                    weight += OFFSET;
+                    sum = 2;
 
-
-                    cout << "Step 2, dKp *= 1.1" <<endl;
-                    cout<< "best err 8 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
                 } else {
                     Kp += dKp;
                     dKp *= 0.9;
-//                    weight += OFFSET;
-//                    sum = 1;
-
-//                    cout << "Step 2, Kp += dKp" <<endl;
-//                    cout << "dKp *= 0.9" <<endl;
-//                    cout<< "best err 9 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
+                    sum = 1;
 
                 }
 
-//                cout << "numOfstep is " << numOfstep <<endl;
-
                 step = 0;
                 K_option = 1;
-                num_step = 0;
-                numOfstep = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
-                weight += OFFSET;
 
             }
 
         } else if (K_option == 1) {
             UpdateError(cte);
 
-            if (numOfstep > MAX_STEP + weight) {
-
+            if ((numOfstep > MAX_STEP + weight) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
+
                     best_err = err;
                     dKi *= 1.1;
-//                    num_step = 0;
-//                    weight += OFFSET;
+                    weight += OFFSET;
+                    sum = 2;
 
-                    cout << "Step 2, dKi *= 1.1" <<endl;
-                    cout<< "best err 10 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
+
                 } else {
                     Ki += dKi;
                     dKi *= 0.9;
-//                    sum = 1;
+                    sum = 1;
 
-//                    cout << "Step 2, Ki += dKi" <<endl;
-//                    cout << "dKi *= 0.9" <<endl;
-//                    cout<< "best err 11 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
                 }
-
-//                cout << "numOfstep is " << numOfstep <<endl;
 
                 step = 0;
                 K_option = 2;
-                num_step = 0;
-                numOfstep = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
-                weight += OFFSET;
-
-
             }
 
         } else if (K_option == 2) {
             UpdateError(cte);
 
-            if (numOfstep > MAX_STEP + weight) {
-
+            if ((numOfstep > MAX_STEP + weight) && err > 0) {
                 err = TotalError(err);
 
                 if (err < best_err) {
+
                     best_err = err;
                     dKd *= 1.1;
-//                    num_step = 0;
-//                    weight += OFFSET;
-
-                    cout << "Step 2, dKd *=1.1" <<endl;
-                    cout<< "best err 12 is " << best_err << endl;
-                    cout<< "err is " << err << endl;
+                    weight += OFFSET;
+                    sum = 2;
 
                 } else {
                     Kd += dKd;
                     dKd *= 0.9;
-//                    sum = 1;
-
-//                    cout << "Step 2, Kd += dKd" <<endl;
-//                    cout << "dKd *= 0.9" <<endl;
-//                    cout<< "best err 13 is " << best_err << endl;
-//                    cout<< "err is " << err << endl;
+                    sum = 1;
 
                 }
 
-//                cout << "numOfstep is " << numOfstep <<endl;
-
                 step = 0;
                 K_option = 0;
-                num_step = 0;
-                numOfstep = 0;
-                err = 0;
-                d_error = 0;
-                i_error = 0;
-                p_error = 0;
-                sum = 1;
-                weight += OFFSET;
+
             }
         }
     }
@@ -363,6 +280,8 @@ void PID::twiddle(double cte) {
     if ((dKp + dKi + dKd) < tol){
         cout << "Kp OP: " << Kp << "Ki OP: " << Ki << "Kd OP: " << Kd << endl;
         cout << "dKp : " << dKp << " dKi : " << dKi << " dKd : " << dKd << endl;
+        cout << "Twiddle 2" << endl;
+
         TWIDDLE = 2;
 
         return;

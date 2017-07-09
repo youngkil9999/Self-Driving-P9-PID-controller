@@ -93,13 +93,26 @@ still be compilable with cmake and make./
 
 
 ## PROCESS
+![](/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID controller-P9/IMG.JPG)
 
-1. Run the code with simulator to check whether they are communicating each other
+1. Run the code with the simulator to check whether they are communicating each other
 
-![alt text][image1]
 
-2. The car didn't move staying straight with the steering degree 0.4
+2. Initial Kp, Ki, Kd setting with 0.1, 0.001, 1, which is coming from ratio of p_error, i_error, d_error with the initial test running because the output value, which is steering angle between -1(-45 degree) to +1(+45 degree). Those initial ratio could make the output value between -1 to +1 in general.
+ - p_error = cte;
+ - i_error += cte;
+ - d_error = p_error - prev_cte;
 
-3. Start with initialize pid class
+ if cte value is like 7, then Kp*p_error is 0.7 and i_error is 140, then Ki*i_error is 0.14 and d_error is like 10, then Kd*d_error is 0.1.
+ Then, TWIDDLE Algorithm could find the optimized hyper-parameter during the simulation operating. the result presented that the best Kp, Ki, Kd values are,
 
-4.
+ - Kp = 0.252
+ - Ki = 0.00077
+ - Kd = 2.16
+
+ The vehicle speed is 0.3 as initially setup an the value critically affect the Kp, Ki, Kd result. They will need to be adjusted as the speed changes.
+
+3. PID controller
+ - P controller : Steering angle relative of the CTE(Cross Track Error). As CTE increases, steering angle, which is output value of P controller also increases.
+ - I controller : Summation of CTE. It feels like a spring that could absorb the CTE oscillation cause the ratio of summation in CTE affect the steering angle.
+ - D controller : Rate of CTE change. As CTE changes rapidly, output of steering angle increases.

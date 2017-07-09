@@ -4,8 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID-Control-Project/src/PID.cpp" "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID-Control-Project/cmake-build-debug/CMakeFiles/pid.dir/src/PID.cpp.o"
-  "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID-Control-Project/src/main.cpp" "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID-Control-Project/cmake-build-debug/CMakeFiles/pid.dir/src/main.cpp.o"
+  "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID controller-P9/src/PID.cpp" "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID controller-P9/CMakeFiles/pid.dir/src/PID.cpp.o"
+  "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID controller-P9/src/main.cpp" "/Users/JAY/Desktop/Udacity/Self_Driving_Car/CarND-PID controller-P9/CMakeFiles/pid.dir/src/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "Clang")
 
